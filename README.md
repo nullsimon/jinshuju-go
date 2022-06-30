@@ -14,7 +14,7 @@ This is the official docs from [jinshuju](https://jinshuju.net/help/articles/api
 
 ```go
     // 获取config
-        var conf jinshuju.Conf
+    var conf jinshuju.Conf
 	raw, err := ioutil.ReadFile("conf.json")
 	if err != nil {
 		log.Fatal(err)
