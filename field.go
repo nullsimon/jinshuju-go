@@ -27,8 +27,6 @@ type MediaType struct {
 }
 
 type Field struct {
-	FieldId string
-
 	Label string `json:"label"`
 
 	Type string `json:"type"`
@@ -54,7 +52,16 @@ type Field struct {
 
 type FieldMap map[string]Field
 
-type FieldType1 interface {
+type Entry struct {
+	SerialNumber        int     `json:"serial_number"`
+	CreatedAt           string  `json:"created_at"`
+	UpdatedAt           string  `json:"updated_at"`
+	InfoFillingDuration float64 `json:"info_filling_duration"`
+	CreatorName         string  `json:"creator_name"`
+	Fields              []FieldMap
+}
+
+type FieldType interface {
 	isSingleChoice() bool
 	isMultipleChoice() bool
 	isAllowOther() bool
@@ -64,30 +71,6 @@ type FieldType1 interface {
 	isSectionBreak() bool
 	trimLabel()
 }
-
-const (
-	//SingleChoiceField 单选
-	SingleChoiceField FieldType = iota + 1
-
-	DropDownField
-	//MultipleChoiceField 多选
-	MultipleChoiceField
-
-	//ParagraphTextField 多行文本
-	ParagraphTextField
-	//SingleLineTextField 单行文本
-	SingleLineTextField
-	//MultipleLineTextField 多行文本
-	MultipleLineTextField
-
-	DateTimeField
-	AttachmentField
-
-	//SectionBreakField 分割线
-	SectionBreakField
-)
-
-type FieldType int
 
 func (f *Field) isSingleChoice() bool {
 	return f.Type == "single_choice" || f.Type == "drop_down"
@@ -117,15 +100,6 @@ func (f *Field) isSectionBreak() bool {
 	return f.Type == "section_break"
 }
 
-func (f *Field) trimLabel(label string) {
+func (f *Field) trimLabel() {
 	f.Label = strings.TrimSpace(f.Label)
-}
-
-type Entry struct {
-	SerialNumber        int     `json:"serial_number"`
-	CreatedAt           string  `json:"created_at"`
-	UpdatedAt           string  `json:"updated_at"`
-	InfoFillingDuration float64 `json:"info_filling_duration"`
-	CreatorName         string  `json:"creator_name"`
-	Fields              []FieldMap
 }

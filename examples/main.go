@@ -2,16 +2,15 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
-	"log"
 
 	jinshuju "github.com/nullsimon/jinshuju-go"
+	log "github.com/sirupsen/logrus"
 )
 
 func main() {
 
-	var conf jinshuju.JinshujuConf
+	var conf jinshuju.Conf
 	raw, err := ioutil.ReadFile("conf.json")
 	if err != nil {
 		log.Fatal(err)
@@ -21,14 +20,14 @@ func main() {
 	client := jinshuju.NewClient(conf)
 	form, err := client.GetFormFields("test")
 	if err != nil {
-		fmt.Println(err)
+		log.Fatal(err)
 		return
 	}
-	fmt.Println(len(form))
+	log.Info(len(form))
 	entries, err := client.GetFormEntries("test")
 	if err != nil {
-		fmt.Println(err)
+		log.Fatal(err)
 		return
 	}
-	fmt.Println(len(entries))
+	log.Info(len(entries))
 }

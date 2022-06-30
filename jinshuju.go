@@ -10,13 +10,13 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-type JinshujuConf struct {
+type Conf struct {
 	AppKey    string `json:"app_key"`
 	AppSecret string `json:"app_secret"`
 }
 
-type Jinshuju struct {
-	JinshujuConf
+type Client struct {
+	Conf
 }
 
 type FieldData struct {
@@ -33,16 +33,16 @@ type EntriesData struct {
 	Next  int     `json:"next"`
 }
 
-func NewClient(conf JinshujuConf) *Jinshuju {
-	return &Jinshuju{
-		JinshujuConf: conf,
+func NewClient(conf Conf) *Client {
+	return &Client{
+		Conf: conf,
 	}
 }
 
-func (j *Jinshuju) GetFormFields(formName string) ([]FieldMap, error) {
+func (c *Client) GetFormFields(formName string) ([]FieldMap, error) {
 	api := "https://jinshuju.net/api/v1/forms/" + formName
 	req, err := http.NewRequest("GET", api, nil)
-	req.SetBasicAuth(j.AppKey, j.AppSecret)
+	req.SetBasicAuth(c.AppKey, c.AppSecret)
 
 	if err != nil {
 		log.Error(err)
@@ -71,12 +71,11 @@ func (j *Jinshuju) GetFormFields(formName string) ([]FieldMap, error) {
 		return nil, err
 	}
 	return form.Fields, nil
-
 }
 
-func (j *Jinshuju) GetFormEntries(formName string) ([]Entry, error) {
+func (c *Client) GetFormEntries(formName string) ([]Entry, error) {
 
-	form, error := j.GetFormFields(formName)
+	form, error := c.GetFormFields(formName)
 	if error != nil {
 		log.Error(error)
 		return nil, error
@@ -88,7 +87,7 @@ func (j *Jinshuju) GetFormEntries(formName string) ([]Entry, error) {
 	for next != 0 {
 		api := "https://jinshuju.net/api/v1/forms/" + formName + "/entries?next=" + strconv.Itoa(next)
 		req, err := http.NewRequest("GET", api, nil)
-		req.SetBasicAuth(j.AppKey, j.AppSecret)
+		req.SetBasicAuth(c.AppKey, c.AppSecret)
 
 		if err != nil {
 			log.Error(err)
@@ -123,7 +122,11 @@ func (j *Jinshuju) GetFormEntries(formName string) ([]Entry, error) {
 			log.Error(err)
 			return nil, err
 		}
-
+		// 无data的时候，返回空
+		if jinshujuData["data"] == nil {
+			next = 0
+			continue
+		}
 		var data = jinshujuData["data"].([]interface{})
 		for i, entry := range entries.Data {
 			if data[i] == nil {
@@ -146,7 +149,6 @@ func (j *Jinshuju) GetFormEntries(formName string) ([]Entry, error) {
 						continue
 					} else {
 						log.Info(`entry 无此字段 ` + fieldKey + ` ` + field.Label)
-
 					}
 				}
 				var choose []Choice
@@ -165,7 +167,7 @@ func (j *Jinshuju) GetFormEntries(formName string) ([]Entry, error) {
 						if field.isAllowOther() && strings.HasPrefix(value.(string), "其他") {
 							choose = append(choose, Choice{OtherValue: value.(string), IsOther: true})
 						} else {
-							log.Info(`单选：无此选项 fieldKey: %v, fieldLable: %v, value, %v`, fieldKey, field.Label, value.(string))
+							log.Info(`单选：无此选项 fieldKey: %v, fieldLabel: %v, value, %v`, fieldKey, field.Label, value.(string))
 						}
 					}
 				}
@@ -176,15 +178,15 @@ func (j *Jinshuju) GetFormEntries(formName string) ([]Entry, error) {
 						choiceValueMap[choice.Name] = true
 					}
 					for _, v := range value.([]interface{}) {
-						if c, ok := v.(string); ok {
-							choose = append(choose, Choice{Value: c})
+						if _, ok := v.(string); ok {
+							choose = append(choose, Choice{Value: v.(string)})
 						} else {
 							// 看下是否可输入
-							if c != "" {
-								if field.isAllowOther() && strings.HasPrefix(c, "其他") {
-									choose = append(choose, Choice{OtherValue: c, IsOther: true})
+							if v.(string) != "" {
+								if field.isAllowOther() && strings.HasPrefix(v.(string), "其他") {
+									choose = append(choose, Choice{OtherValue: v.(string), IsOther: true})
 								} else {
-									log.Info(`多选：无此选项 fieldKey: %v, fieldLable: %v, value, %v`, fieldKey, field.Label, c)
+									log.Info(`多选：无此选项 fieldKey: %v, fieldLabel: %v, value, %v`, fieldKey, field.Label, v.(string))
 								}
 							}
 						}
