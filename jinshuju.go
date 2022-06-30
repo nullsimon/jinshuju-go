@@ -163,7 +163,7 @@ func (j *Jinshuju) GetFormEntries(formName string) ([]Entry, error) {
 					// 看下是否可输入,空值不考虑
 					if len(choose) == 0 && value.(string) != "" {
 						if field.isAllowOther() && strings.HasPrefix(value.(string), "其他") {
-							choose = append(choose, Choice{OtherValue: value.(string)})
+							choose = append(choose, Choice{OtherValue: value.(string), IsOther: true})
 						} else {
 							log.Info(`单选：无此选项 fieldKey: %v, fieldLable: %v, value, %v`, fieldKey, field.Label, value.(string))
 						}
@@ -180,14 +180,13 @@ func (j *Jinshuju) GetFormEntries(formName string) ([]Entry, error) {
 							choose = append(choose, Choice{Value: c})
 						} else {
 							// 看下是否可输入
-							if v.(string) != "" {
-								if field.isAllowOther() && strings.HasPrefix(value.(string), "其他") {
-									choose = append(choose, Choice{OtherValue: value.(string)})
+							if c != "" {
+								if field.isAllowOther() && strings.HasPrefix(c, "其他") {
+									choose = append(choose, Choice{OtherValue: c, IsOther: true})
 								} else {
-									log.Info(`多选：无此选项 fieldKey: %v, fieldLable: %v, value, %v`, fieldKey, field.Label, v.(string))
+									log.Info(`多选：无此选项 fieldKey: %v, fieldLable: %v, value, %v`, fieldKey, field.Label, c)
 								}
 							}
-
 						}
 					}
 				}
